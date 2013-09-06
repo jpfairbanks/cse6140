@@ -16,41 +16,42 @@ import (
 type Dtype int64
 
 var NULL *Node
+
 //NULL := 0
 
 //Node: Struct containing a datum and a pointer to the next Node.
-type Node struct{
+type Node struct {
 	Datum Dtype
 	Next  *Node
 }
 
 //List: Struct for containing the head of the list.
-type List struct{
+type List struct {
 	Head *Node
 }
 
 //New: Make a new list of Nodes.
 func New() List {
 	var ell List
-	head := &Node{ Datum:0, Next:NULL }
+	head := &Node{Datum: 0, Next: NULL}
 	ell.Head = head
 	return ell
 }
 
 //Insert: Insert a Node into the list.
-func (ell List) Insert(pos int, element Dtype){
+func (ell List) Insert(pos int, element Dtype) {
 	node := ell.Head
-	for i:=0; i < pos; i++ {
+	for i := 0; i < pos; i++ {
 		node = node.Next
 	}
 	next := node.Next
-	node.Next = &Node{Datum:element, Next:next}
+	node.Next = &Node{Datum: element, Next: next}
 }
 
 //Remove: Remove a Node into the list.
-func (ell List) Remove(pos int) Dtype{
+func (ell List) Remove(pos int) Dtype {
 	node := ell.Head
-	for i:=0; i < pos; i++ {
+	for i := 0; i < pos; i++ {
 		node = node.Next
 	}
 	next := node.Next
@@ -59,7 +60,6 @@ func (ell List) Remove(pos int) Dtype{
 }
 
 //Strider: a slice of type dtype with a fixed stride
-type Strider interface{
-    Walk() Dtype
+type Strider interface {
+	Walk() Dtype
 }
-
