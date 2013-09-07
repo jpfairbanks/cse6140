@@ -27,7 +27,7 @@ func (s Strider) Walk() Dtype {
 	iterations := s.stride
 	for k := 0; k < iterations; k++ {
 		for i := 0; i < len(s.data)-k; i += s.stride {
-			v = s.data[i+k]
+			v += s.data[i+k]
 		}
 	}
 	return v
@@ -56,10 +56,15 @@ func main() {
 	for i, k := range size {
 		sdr.stride = k
 		tg.Tic(i)
-		for iter := 0; iter < 4; iter++ {
-			sdr.Walk()
+		var sum Dtype
+		for iter := 0; iter < 1; iter++ {
+			sum = sdr.Walk()
 		}
 		tg.Toc(i)
+		if correctsum := (n * (n - 1)) / 2; correctsum != int(sum) {
+			fmt.Println("we did not hit all the elements")
+			fmt.Println(correctsum, sum)
+		}
 	}
 
 	perm := rand.Perm(n)
@@ -69,10 +74,11 @@ func main() {
 	for _, j := range perm {
 		v = sdr.data[j]
 	}
+
 	ptg.Toc(0)
 	fmt.Println(v)
 	tg.Resolve()
 	fmt.Println(tg.TupleString("\n"))
 	ptg.Resolve()
-	fmt.Println(ptg)
+	fmt.Println("Random Access: ", ptg)
 }
