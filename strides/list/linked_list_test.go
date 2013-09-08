@@ -33,7 +33,7 @@ func TestInsert(t *testing.T) {
 	}
 }
 
-func TestMultiInsert(t *testing.T) {
+func TestSecondInsert(t *testing.T) {
 	ell := New()
 	ptr := ell.Head
 	t.Logf("got ptr:%v", ptr)
@@ -53,4 +53,29 @@ func TestMultiInsert(t *testing.T) {
 	}
 	fmt.Println("about to print")
 	fmt.Println(ell.String())
+}
+
+func TestBigList(t *testing.T) {
+	ell := New()
+	k := uint(15)
+	size := 2 << k
+	//Fill the list full of data
+	for i := 0; i < size; i++ {
+		ell.Insert(i, Dtype(i))
+	}
+
+	//Extract all of the data
+	var node *Node
+	var sum Dtype
+	node = ell.Head
+	for node != nil {
+		sum += node.Datum
+		node = node.Next
+	}
+	//Checking that we made the traversal correctly
+	correctsum := (size * (size - 1)) / 2
+	fmt.Printf("complete traversal: %v %v", sum, correctsum)
+	if Dtype(correctsum) != sum {
+		t.Errorf("incomplete traversal: %v %v", sum, correctsum)
+	}
 }
