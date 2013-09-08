@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/jpfairbanks/timing"
 	"math/rand"
+	"flag"
 )
 
 //Dtype: the data type of the arrays
@@ -21,47 +22,67 @@ type Strider struct {
 	stride int
 }
 
+//Fill: fill a strided array so that we can walk it later
+func (s Strider) Fill() {
+	n := len(s.data)
+	iterations := s.stride
+	for k := 0; k < iterations; k++ {
+		for i := 0; i < len(s.data)-k; i += 1 {
+			s.data[(s.stride*i+k) % n] = Dtype((s.stride*(i+1) + k) % n)
+		}
+	}
+	for i:=1; i < s.stride; i++{
+		//fmt.Printf("%d ", i)
+		s.data[(n-i)-1] = s.data[(n-i)-1] + 1
+	}
+	s.data[n-1] = 0
+}
+
 //Walk: walk a strided array by the stride
 func (s Strider) Walk() Dtype {
 	var v Dtype
-	iterations := s.stride
-	for k := 0; k < iterations; k++ {
-		for i := 0; i < len(s.data)-k; i += s.stride {
-			v += s.data[i+k]
-		}
+	ptr := s.data[0]
+	//fmt.Printf("stride: %d, ", s.stride)
+	for ptr != 0 {
+		v += ptr
+		ptr = s.data[ptr]
 	}
 	return v
 }
 
+var scaleptr *uint
+func init(){
+	scaleptr = flag.Uint("scale", 10, "set the length of the array to access as a power of 2")
+	flag.Parse()
+}
 //main: time.Time the Walk
 func main() {
 	var n, s int
-	n = 2 << 20
-	fmt.Println(n)
+	var scale uint
+	scale = *scaleptr
+	n = 2 << scale
+	//fmt.Printf("scale:%d,", scale)
 	s = 1
-	k := 18
-	size := make([]int, k)
+	k := 3
+	stepsize := make([]int, k)
 	tg := timing.New(k)
-
-	size[0] = 1
-	for i := 1; i < len(size); i++ {
-		size[i] = 2 * size[i-1]
+	correctsum := Dtype((n * (n - 1)) / 2)
+	stepsize[0] = 1
+	for i := 1; i < len(stepsize); i++ {
+		stepsize[i] = 2 * stepsize[i-1]
 	}
-	fmt.Println(size)
+	//fmt.Printf("strides:%v,\n",stepsize)
 	sdr := Strider{make([]Dtype, n), s}
-	for i := 0; i < len(sdr.data); i++ {
-		sdr.data[i] = Dtype(i)
-	}
-
-	for i, k := range size {
+	var sum Dtype
+	for i, k := range stepsize {
 		sdr.stride = k
+		sdr.Fill()
 		tg.Tic(i)
-		var sum Dtype
-		for iter := 0; iter < 1; iter++ {
+		for iter := 0; iter < 10; iter++ {
 			sum = sdr.Walk()
 		}
 		tg.Toc(i)
-		if correctsum := (n * (n - 1)) / 2; correctsum != int(sum) {
+		if  correctsum != sum {
 			fmt.Println("we did not hit all the elements")
 			fmt.Println(correctsum, sum)
 		}
@@ -70,15 +91,16 @@ func main() {
 	perm := rand.Perm(n)
 	ptg := timing.New(1)
 	ptg.Tic(0)
-	var v Dtype
+	var randsum Dtype
 	for _, j := range perm {
-		v = sdr.data[j]
+		randsum += sdr.data[j]
 	}
-
 	ptg.Toc(0)
-	fmt.Println(v)
+	if randsum != correctsum {
+		fmt.Printf("random ordered produced wrong sum: %v, %v,\n", randsum, correctsum)
+	}
 	tg.Resolve()
 	fmt.Println(tg.TupleString("\n"))
 	ptg.Resolve()
-	fmt.Println("Random Access: ", ptg)
+	fmt.Println("Random: ", ptg)
 }
