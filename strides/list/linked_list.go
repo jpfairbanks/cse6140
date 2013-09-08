@@ -7,7 +7,9 @@ Liscence: BSD
 package list
 
 import (
-//    "fmt"
+	"fmt"
+	"strings"
+
 //    "github.com/jpfairbanks/timing"
 //    "math/rand"
 )
@@ -39,17 +41,31 @@ func New() List {
 }
 
 //Insert: Insert a Node into the list.
-func (ell List) Insert(pos int, element Dtype) {
+func (ell *List) Insert(pos int, element Dtype) {
+	var prev *Node
 	node := ell.Head
 	for i := 0; i < pos; i++ {
+		//fmt.Println("getting the next")
+		if i == pos-1 {
+			prev = node
+		}
 		node = node.Next
 	}
-	next := node.Next
-	node.Next = &Node{Datum: element, Next: next}
+	//fmt.Printf("found pos node: %v\n", node)
+	//fmt.Printf("found prev: %v\n", prev)
+	newNode := &Node{Datum: element, Next: node}
+	//fmt.Printf("made newNode: %v\n", newNode)
+	if pos > 0 {
+		prev.Next = newNode
+	} else {
+		ell.Head = newNode
+	}
+	//fmt.Println("did previous")
+	//fmt.Println(node.Next)
 }
 
 //Remove: Remove a Node into the list.
-func (ell List) Remove(pos int) Dtype {
+func (ell *List) Remove(pos int) Dtype {
 	node := ell.Head
 	for i := 0; i < pos; i++ {
 		node = node.Next
@@ -57,6 +73,32 @@ func (ell List) Remove(pos int) Dtype {
 	next := node.Next
 	node.Next = node.Next.Next
 	return next.Datum
+}
+
+//String: print  list by printing each element on a line
+func (ell *List) String() string {
+	var curr *Node
+	curr = ell.Head
+	var repr map[int]string
+	repr = make(map[int]string)
+	var sterm string
+	var i int
+	for curr != nil {
+		sterm = fmt.Sprintf("%d %v %v",
+			i, curr.Datum, curr.Next)
+		//fmt.Println(sterm)
+		repr[i] = sterm
+		i++
+		curr = curr.Next
+	}
+	ordered := make([]string, len(repr))
+	for j := 0; j < i; j++ {
+		ordered[j] = repr[j]
+	}
+	var joined string
+	joined = strings.Join(ordered, "\n")
+	//fmt.Println(joined)
+	return joined
 }
 
 //Strider: a slice of type dtype with a fixed stride
