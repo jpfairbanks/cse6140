@@ -9,7 +9,6 @@ package list
 import (
 	"fmt"
 	"strings"
-
 //    "github.com/jpfairbanks/timing"
 //    "math/rand"
 )
