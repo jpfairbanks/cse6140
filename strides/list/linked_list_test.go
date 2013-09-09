@@ -1,8 +1,10 @@
 package list
 
 import (
+	"os"
 	"fmt"
 	"testing"
+	"github.com/jpfairbanks/timing"
 )
 
 func TestNew(t *testing.T) {
@@ -51,31 +53,41 @@ func TestSecondInsert(t *testing.T) {
 	if node.Next.Datum != 5 {
 		t.Errorf("insert failed to adjust prev.Next: %v", node.Next)
 	}
-	fmt.Println("about to print")
-	fmt.Println(ell.String())
+	//fmt.Println(ell.String())
 }
 
 func TestBigList(t *testing.T) {
-	ell := New()
-	k := uint(15)
-	size := 2 << k
-	//Fill the list full of data
-	for i := 0; i < size; i++ {
-		ell.Insert(i, Dtype(i))
-	}
-
-	//Extract all of the data
+	fmt.Println("benching")
 	var node *Node
 	var sum Dtype
-	node = ell.Head
-	for node != nil {
-		sum += node.Datum
-		node = node.Next
+	var ell List
+	maxscale := 18
+	minscale := 14
+	tg := timing.New(maxscale-minscale)
+
+	for k:=minscale; k < maxscale; k++{
+		os.Stderr.WriteString(fmt.Sprintf("starting scale %d\n", k))
+		ell = New()
+		size := 2 << uint(k)
+		//Fill the list full of data
+		for i := 0; i < size; i++ {
+			ell.Insert(i, Dtype(i))
+		}
+		//Extract all of the data
+		sum = 0
+		node = ell.Head
+		tg.Tic(k-minscale)
+		for node != nil {
+			sum += node.Datum
+			node = node.Next
+		}
+		tg.Toc(k-minscale)
+		//Checking that we made the traversal correctly
+		correctsum := (size * (size - 1)) / 2
+		if Dtype(correctsum) != sum {
+			t.Errorf("incomplete traversal: %v %v", sum, correctsum)
+		}
 	}
-	//Checking that we made the traversal correctly
-	correctsum := (size * (size - 1)) / 2
-	fmt.Printf("complete traversal: %v %v", sum, correctsum)
-	if Dtype(correctsum) != sum {
-		t.Errorf("incomplete traversal: %v %v", sum, correctsum)
-	}
+	tg.Resolve()
+	fmt.Println(tg)
 }
