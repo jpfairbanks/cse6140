@@ -63,7 +63,7 @@ func main() {
 	n = 2 << scale
 	//fmt.Printf("scale:%d,", scale)
 	s = 1
-	k := 3
+	k := 6
 	stepsize := make([]int, k)
 	tg := timing.New(k)
 	correctsum := Dtype((n * (n - 1)) / 2)
@@ -92,15 +92,18 @@ func main() {
 	ptg := timing.New(1)
 	ptg.Tic(0)
 	var randsum Dtype
-	for _, j := range perm {
-		randsum += sdr.data[j]
+	for run:=0; run < 10; run++{
+		randsum = 0
+		for _, j := range perm {
+			randsum += sdr.data[j]
+		}
 	}
 	ptg.Toc(0)
 	if randsum != correctsum {
 		fmt.Printf("random ordered produced wrong sum: %v, %v,\n", randsum, correctsum)
 	}
 	tg.Resolve()
-	fmt.Println(tg.TupleString("\n"))
+	fmt.Print(tg)
 	ptg.Resolve()
-	fmt.Println("Random: ", ptg)
+	fmt.Printf(" %v\n", ptg)
 }
