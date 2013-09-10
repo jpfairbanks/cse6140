@@ -1,10 +1,10 @@
 package list
 
 import (
-	"os"
 	"fmt"
-	"testing"
 	"github.com/jpfairbanks/timing"
+	"os"
+	"testing"
 )
 
 func TestNew(t *testing.T) {
@@ -61,11 +61,11 @@ func TestBigList(t *testing.T) {
 	var node *Node
 	var sum Dtype
 	var ell List
-	maxscale := 18
-	minscale := 14
-	tg := timing.New(maxscale-minscale)
+	maxscale := 20
+	minscale := 18
+	tg := timing.New(maxscale - minscale)
 
-	for k:=minscale; k < maxscale; k++{
+	for k := minscale; k < maxscale; k++ {
 		os.Stderr.WriteString(fmt.Sprintf("starting scale %d\n", k))
 		ell = New()
 		size := 2 << uint(k)
@@ -76,12 +76,12 @@ func TestBigList(t *testing.T) {
 		//Extract all of the data
 		sum = 0
 		node = ell.Head
-		tg.Tic(k-minscale)
+		tg.Tic(k - minscale)
 		for node != nil {
 			sum += node.Datum
 			node = node.Next
 		}
-		tg.Toc(k-minscale)
+		tg.Toc(k - minscale)
 		//Checking that we made the traversal correctly
 		correctsum := (size * (size - 1)) / 2
 		if Dtype(correctsum) != sum {
@@ -89,5 +89,5 @@ func TestBigList(t *testing.T) {
 		}
 	}
 	tg.Resolve()
-	fmt.Println(tg)
+	fmt.Println(tg.TupleString("\n"))
 }
