@@ -10,36 +10,43 @@ import (
 )
 
 func run(i int, ch chan int) {
-	time.Sleep(10*time.Millisecond)
+	time.Sleep(10 * time.Millisecond)
 	ch <- i
 }
 
-func Parfor(numproc int, numdata int) int{
-	ch := make(chan int, numproc)
-	data := make([]int, numdata)
-	for i,_ := range data{
-		data[i] = i
+func cpusum(xarr []int, start int, stop int, ch chan int) {
+	var sum int
+	for i := start; i < stop; i++ {
+		sum += i
 	}
-	var start int
-	var stop int
-	run := func(xarr []int, ch chan int) {
-		var sum int; for _, xi := range xarr{
-		 sum += xi}
-		  ch <- sum 
-		  return
-		}
-	for i := 0; i < numproc; i++ {
-		start = i*(numdata/numproc)
-		stop = (i+1)*(numdata/numproc)
-		go run(data[start:stop], ch)
-	}
-	var j int
-	for i := 0; i < numproc; i++ {
-		j += <-ch
-	}
-	return j
+	ch <- sum
 }
 
-func main(){
+func memsum(xarr []int, start int, stop int, ch chan int) {
+	var sum int
+	for _, xi := range xarr[start:stop] {
+		sum += xi
+	}
+	ch <- sum
+	return
+}
+
+func Parfor(f func([]int, int, int, chan int), numproc int, numdata int, data []int) int {
+	ch := make(chan int, numproc)
+	var start int
+	var stop int
+	for i := 0; i < numproc; i++ {
+		start = i * (numdata / numproc)
+		stop = (i + 1) * (numdata / numproc)
+		go f(data, start, stop, ch)
+	}
+	var finalsum int
+	for i := 0; i < numproc; i++ {
+		finalsum += <-ch
+	}
+	return finalsum
+}
+
+func main() {
 
 }
