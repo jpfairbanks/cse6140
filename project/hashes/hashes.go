@@ -9,6 +9,10 @@ distinct values of a and b.
 
 package hashes
 
+import (
+	"math/rand"
+)
+
 //MOD: a nice big prime
 const MOD int64 = (2 << 31) - 1
 
@@ -33,4 +37,10 @@ func (h *Hash) Apply(x int64) int64 {
 //New: create a new hash and make sure that it is valid
 func New(a int64, b int64) Hash {
 	return Hash{a, b}
+}
+
+func Rand(r *rand.Rand) Hash {
+	a := rand.Int63n(MOD)
+	b := rand.Int63n(MOD)
+	return New(a, b)
 }

@@ -10,6 +10,7 @@ package hashes
 
 import (
 	"fmt"
+	"math/rand"
 	"testing"
 )
 
@@ -52,6 +53,19 @@ func TestNew(t *testing.T) {
 	}
 }
 
+func TestRand(t *testing.T) {
+	h := Rand(rand.New(rand.NewSource(0)))
+	var aval, bval int64
+	aval = 1432518515
+	bval = 3617697886
+	fmt.Printf("%v\n", h)
+	if h.a != aval {
+		t.Errorf("a!=%d", aval)
+	}
+	if h.b != bval {
+		t.Errorf("b!=%d", bval)
+	}
+}
 func TestApply(t *testing.T) {
 	var avals, bvals []int64
 	var hashes []Hash
