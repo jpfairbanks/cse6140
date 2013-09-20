@@ -9,36 +9,26 @@ distinct values of a and b.
 
 package hashes
 
-import(
-	"fmt"
-	"crypto/rand"
-)
+import ()
+
+const MOD int64 = (2 << 31) - 1
+const HL uint64 = 31
 
 //Hash: a struct for hashing things
-type struct Hash {
-	var a, b, p int
+type Hash struct {
+	a, b int64
 }
 
-/*
-func (h Hash) Write() int, error {
-	buff := make([]int, buffsize)
-	fmt.Println("write is fake implemented")
-	return 1, error
-}
-*/
-
-//Return: the hash for a single input
-func (h Hash) hash(x int) int {
-	return (a * x + b) % p
+//Apply: compute the hash for a single input you need to take this modulo the width
+// in order to make sure it fits in the array that you want to store it in.
+func (h Hash) Apply(x int64) int64 {
+	var result int64
+	result = (h.a*x + h.b)
+	result = (result >> HL) % MOD
+	return result
 }
 
 //New: create a new hash and make sure that it is valid
-func New(a,b,p int) Hash {
-	
-}
-
-//New: create a new hash and make sure that it is valid
-func New(a,b int) func(int) int {
-	p := rand.Prime(crypto.Reader, 64)
-	return func(x int)int {return (a * x + b) % p}
+func New(a int64, b int64) Hash {
+	return Hash{a, b}
 }
