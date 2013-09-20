@@ -9,9 +9,10 @@ distinct values of a and b.
 
 package hashes
 
-import ()
-
+//MOD: a nice big prime
 const MOD int64 = (2 << 31) - 1
+
+//HL: highlevel bits are defined as top 31 bits.
 const HL uint64 = 31
 
 //Hash: a struct for hashing things
@@ -21,10 +22,11 @@ type Hash struct {
 
 //Apply: compute the hash for a single input you need to take this modulo the width
 // in order to make sure it fits in the array that you want to store it in.
-func (h Hash) Apply(x int64) int64 {
+func (h *Hash) Apply(x int64) int64 {
 	var result int64
 	result = (h.a*x + h.b)
-	result = (result >> HL) % MOD
+	//take the highbits 64bit+ lowbits and make sure what is left is less than 2^31-1
+	result = ((result >> HL) + result) & MOD
 	return result
 }
 

@@ -6,7 +6,6 @@ we need to find primes and compute a*x+b mod p as the hash,
 then we need to test that these hashes are indeed pairwise independent for
 distinct values of a and b.
 */
-
 package hashes
 
 import (
@@ -36,11 +35,15 @@ import (
 //	return Hash{a, b}
 //}
 
+func TestDummy(t *testing.T) {
+	fmt.Println("start test")
+}
+
 func TestNew(t *testing.T) {
 	var aval, bval int64
 	aval = 5
 	bval = 10
-	h := New(aval, 10)
+	h := New(aval, bval)
 	if h.a != aval {
 		t.Errorf("a!=%d", aval)
 	}
@@ -52,15 +55,19 @@ func TestNew(t *testing.T) {
 func TestApply(t *testing.T) {
 	var avals, bvals []int64
 	var hashes []Hash
-	avals = []int64{1, 2, 4, 8, 16}
-	bvals = []int64{5, 7, 10, 45, 3}
+	avals = []int64{1, 2, 4, 8, 16, 2394871231}
+	bvals = []int64{5, 7, 10, 45, 3, 9283742213}
+	numhashes := len(avals)
+	hashes = make([]Hash, numhashes)
 	for i, a := range avals {
 		hashes[i] = New(a, bvals[i])
 	}
 	var j int64
-	for j = 0; j < 1000; j++ {
-		for i, h := range hashes {
-			fmt.Printf("%d %d:%d\n", j, i, h.Apply(j))
+	for j = 0; j < 10000; j += 23 {
+		fmt.Printf("%d:", j)
+		for _, h := range hashes {
+			fmt.Printf("\t%d", h.Apply(j))
 		}
+		fmt.Printf("\n")
 	}
 }
