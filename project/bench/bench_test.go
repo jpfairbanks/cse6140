@@ -7,7 +7,6 @@ package main
 
 import (
 	"fmt"
-	"time"
 	"github.com/jpfairbanks/timing"
 	"testing"
 )
@@ -48,8 +47,4 @@ func TestParfor(t *testing.T){
 	}
 	tmr.Resolve()
 	fmt.Println(tmr.TupleString("\n"))	
-}
-
-func main(){
-
 }

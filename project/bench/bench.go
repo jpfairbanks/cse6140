@@ -6,9 +6,7 @@ Date: 2013-09-19
 package main
 
 import (
-	"fmt"
 	"time"
-	"github.com/jpfairbanks/timing"
 )
 
 func run(i int, ch chan int) {
