@@ -8,6 +8,8 @@ package main
 
 import (
 	"sync/atomic"
+	"strings"
+	"fmt"
 )
 
 //Matrix: a logically 2d array of data stored in row major order
@@ -41,6 +43,18 @@ func (M *Matrix) AtomicAdd(row, col int64, inc int64) int64 {
 //Returns old+inc and guarantees that no data was lost
 func (M *Matrix) Add(row, col int64, inc int64) {
 	M.Data[(row*M.Ncols)+col] += inc
+}
+
+//String: Print a Matrix like in numpy
+func (M *Matrix) String() string{
+	strarr := make([]string, M.Nrows)
+	var str string
+	var i int64
+	for i = 0; i < M.Nrows; i++ {
+		str = fmt.Sprintf("%v", M.Data[i*M.Ncols:(i+1)*M.Ncols])
+		strarr[i] = str
+	}
+	return strings.Join(strarr, "\n")
 }
 
 func updater(M *Matrix, ch chan int64) {

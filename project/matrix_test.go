@@ -34,3 +34,13 @@ func TestRacey(t *testing.T) {
 	fmt.Printf("time racey: %d\n", timeRacey)
 	fmt.Printf("atomic/racey: %d\n", timeAtomic/timeRacey)
 }
+
+func TestString(t *testing.T) {
+	rightS := "[0 0 0 0]\n[0 0 0 0]"
+	M := NewMatrix(2,4)
+	S := M.String()
+	fmt.Println(S)
+	if S != rightS {
+		t.Errorf(S)
+	}
+}
