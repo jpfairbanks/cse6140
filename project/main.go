@@ -1,8 +1,10 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/jpfairbanks/cse6140/project/hashes"
+	"log"
 	"math/rand"
 )
 
@@ -83,21 +85,38 @@ func (cms *CMSketch) PointQuery(position int64) int64 {
 	return mini
 }
 
+var depthPtr, widthPtr, efactorPtr *int64
+
+func init() {
+	depthPtr = flag.Int64("depth", 50, "sets the number of rows (and hash functions) in the CMSketch")
+	widthPtr = flag.Int64("width", 80, "sets the number of columns in the CMSketch")
+	efactorPtr = flag.Int64("efactor", 10, "number of elements = depth*width*efactor")
+	flag.Parse()
+}
+
 func main() {
-	fmt.Println("starting main")
+	//log.New(os.Stderr, "", log.LstdFlags)
+	log.Printf("starting main\n")
 	src := rand.NewSource(0)
 	r := rand.New(src)
-	var Depth, Width int64
-	Depth = 160
-	Width = 480
+	var Depth, Width, efactor, numElements int64
+	Depth = *depthPtr
+	Width = *widthPtr
+	efactor = *efactorPtr
+	numElements = Depth * Width * efactor
+	log.Printf("params:Depth:%d\n", Depth)
+	log.Printf("params:Width:%d\n", Width)
+	log.Printf("params:efactor:%d\n", efactor)
+	log.Printf("params:numElements:%d\n", numElements)
 	hslice := RandomHashes(r, Depth)
 	cms := NewCMSketch(Depth, Width)
 	cms.Hash = hslice
 	fmt.Printf("%s\n", cms.Counter.String())
-	fmt.Printf("Inserting\n")
+	log.Printf("Inserting\n")
 	cms.UpdateSerial(1, 1)
 	fmt.Printf("%s\n", cms.Counter.String())
-	fmt.Printf("Inserting\n")
+	log.Printf("Inserting\n")
+	//Make the zipf distribution of random input
 	var j, z int64
 	var s, v float64
 	var imax uint64
@@ -105,17 +124,25 @@ func main() {
 	v = 1.0
 	imax = 2 << 10
 	zipfer := rand.NewZipf(r, s, v, imax)
+
+	//Use set to store the exact answers
 	set := make(map[int64]int64)
-	for j = 0; j < Depth*Width*10; j++ {
+	for j = 0; j < numElements; j++ {
 		z = int64(zipfer.Uint64())
 		set[z] += 1
 		fmt.Println(z)
 		cms.UpdateSerial(z, 1)
 	}
 	fmt.Printf("%s\n", cms.Counter.String())
-	var qj int64
+	var qj int64 //approximate answers
+	var totalLoss float64
+	loss := func(cj, qj float64) float64 {
+		return (cj - qj) * (cj - qj)
+	}
 	for j, cj := range set {
 		qj = cms.PointQuery(j)
 		fmt.Printf("results:%d %d %d %f\n", j, qj, cj, float64(qj)/float64(cj))
+		totalLoss += loss(float64(cj), float64(qj))
 	}
+	fmt.Printf("Total Loss: %f/%d\n", totalLoss, numElements)
 }
