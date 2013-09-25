@@ -7,9 +7,9 @@ Licence: BSD
 package main
 
 import (
-	"sync/atomic"
-	"strings"
 	"fmt"
+	"strings"
+	"sync/atomic"
 )
 
 //Matrix: a logically 2d array of data stored in row major order
@@ -32,21 +32,23 @@ func (M *Matrix) Read(row, col int64) int64 {
 	return M.Data[(row*M.Ncols)+col]
 }
 
-//AtomicAdd: Increment an element from a Row Major order Matrix
+//AtomicAdd: Increment an element Matrix
 //Returns old+inc and guarantees that no data was lost
 func (M *Matrix) AtomicAdd(row, col int64, inc int64) int64 {
 	addr := &M.Data[(row*M.Ncols)+col]
 	return atomic.AddInt64(addr, inc)
 }
 
-//Add: add to an element from a Row Major order Matrix without synchronizing
-//Returns old+inc and guarantees that no data was lost
-func (M *Matrix) Add(row, col int64, inc int64) {
-	M.Data[(row*M.Ncols)+col] += inc
+//Add: add to an element from a Matrix without synchronizing
+//Returns old+inc and not concurrent safe
+func (M *Matrix) Add(row, col int64, inc int64) int64 {
+	index := (row * M.Ncols) + col
+	M.Data[index] += inc
+	return M.Data[index]
 }
 
 //String: Print a Matrix like in numpy
-func (M *Matrix) String() string{
+func (M *Matrix) String() string {
 	strarr := make([]string, M.Nrows)
 	var str string
 	var i int64
@@ -55,24 +57,4 @@ func (M *Matrix) String() string{
 		strarr[i] = str
 	}
 	return strings.Join(strarr, "\n")
-}
-
-func updater(M *Matrix, ch chan int64) {
-	var i, j int64
-	for i = 0; i < M.Ncols; i++ {
-		for j = 0; j < 100; j++ {
-			M.AtomicAdd(1, i, 1)
-		}
-	}
-	ch <- 1
-}
-
-func raceyUpdater(M *Matrix, ch chan int64) {
-	var i, j int64
-	for i = 0; i < M.Ncols; i++ {
-		for j = 0; j < 100; j++ {
-			M.Add(0, i, 1)
-		}
-	}
-	ch <- 1
 }
