@@ -9,4 +9,17 @@ I am structuring things this way so that I can use github for amnaging the code 
 
 Feel free to use this code for any purpose, academic, instructional, commercial. Please let me know that you are using it. I am curious about my webtraffic. If you are using this code in an academic paper or homework assignment, then you must cite me in order to avoid plagarism.
 
-- [ ] Assignment 1 : strides : strided array access to test cache performance.
+- [X] Assignment 1 : strides : strided array access to test cache performance.
+- [ ] Project : Parallel Count Min Sketch
+
+
+TODOs
+=====
+- [ ] Batch insertions
+- [ ] Element level parallelism
+- [ ] Signal based parallel insert for Depth > 1000
+- [ ] Determine good parameters
+- [ ] Disable exact answer computation
+- [ ] More Tests
+- [ ] Compute speedup against go's builting map[int64][int64] type
+- [ ] Compute parallel speedup for reasonable parameters
