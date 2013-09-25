@@ -39,7 +39,7 @@ func RandomHashes(r *rand.Rand, Depth int64) []hashes.Hash {
 }
 
 //UpdateSerial: Insert a single item into the sketch with a count.
-//If counts can be negative, then you mist estimate differently
+//If counts can be negative, then you must estimate differently
 func (cms *CMSketch) UpdateSerial(position int64, count int64) {
 	for i, h := range cms.Hash {
 		cms.Counter.Add(int64(i), h.Apply(position)%cms.Width, count)
@@ -55,7 +55,6 @@ func (cms *CMSketch) AddSignal(row int64, position int64,
 }
 
 //UpdateDepthParallel: Insert a single item into the sketch with a count.
-//If counts can be negative, then you mist estimate differently
 func (cms *CMSketch) UpdateDepthParallel(position int64, count int64) {
 	ch := make(chan int64, cms.Depth)
 	var i int64
@@ -95,7 +94,7 @@ func init() {
 }
 
 func main() {
-	//log.New(os.Stderr, "", log.LstdFlags)
+	//Handling command line parameters
 	log.Printf("starting main\n")
 	src := rand.NewSource(0)
 	r := rand.New(src)
@@ -108,14 +107,11 @@ func main() {
 	log.Printf("params:Width:%d\n", Width)
 	log.Printf("params:efactor:%d\n", efactor)
 	log.Printf("params:numElements:%d\n", numElements)
+
+	//Initialize Data Structures
 	hslice := RandomHashes(r, Depth)
 	cms := NewCMSketch(Depth, Width)
 	cms.Hash = hslice
-	fmt.Printf("%s\n", cms.Counter.String())
-	log.Printf("Inserting\n")
-	cms.UpdateSerial(1, 1)
-	fmt.Printf("%s\n", cms.Counter.String())
-	log.Printf("Inserting\n")
 	//Make the zipf distribution of random input
 	var j, z int64
 	var s, v float64
@@ -127,6 +123,7 @@ func main() {
 
 	//Use set to store the exact answers
 	set := make(map[int64]int64)
+	log.Printf("Inserting\n")
 	for j = 0; j < numElements; j++ {
 		z = int64(zipfer.Uint64())
 		set[z] += 1
