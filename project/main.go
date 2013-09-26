@@ -6,6 +6,7 @@ import (
 	"github.com/jpfairbanks/cse6140/project/hashes"
 	"log"
 	"math/rand"
+	"time"
 )
 
 //CMSketch: A streaming data structure for tracking the elements of
@@ -124,12 +125,15 @@ func main() {
 	//Use set to store the exact answers
 	set := make(map[int64]int64)
 	log.Printf("Inserting\n")
+	ts := time.Now()
 	for j = 0; j < numElements; j++ {
 		z = int64(zipfer.Uint64())
-		set[z] += 1
-		fmt.Println(z)
+		//set[z] += 1
+		//fmt.Println(z)
 		cms.UpdateSerial(z, 1)
 	}
+	te := time.Now().Sub(ts)
+	fmt.Printf("time: %v\n", te)
 	fmt.Printf("%s\n", cms.Counter.String())
 	var qj int64 //approximate answers
 	var totalLoss float64
@@ -138,7 +142,7 @@ func main() {
 	}
 	for j, cj := range set {
 		qj = cms.PointQuery(j)
-		fmt.Printf("results:%d %d %d %f\n", j, qj, cj, float64(qj)/float64(cj))
+		//fmt.Printf("results:%d %d %d %f\n", j, qj, cj, float64(qj)/float64(cj))
 		totalLoss += loss(float64(cj), float64(qj))
 	}
 	fmt.Printf("Total Loss: %f/%d\n", totalLoss, numElements)
