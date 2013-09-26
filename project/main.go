@@ -47,22 +47,46 @@ func (cms *CMSketch) UpdateSerial(position int64, count int64) {
 	}
 }
 
-//AddSignal: Updates the counter and signals completion on a channel
-func (cms *CMSketch) AddSignal(row int64, position int64,
+//AddSignalSlow: Updates the counter and signals completion on a channel
+func (cms *CMSketch) AddSignalSlow(row int64, position int64,
 	count int64, ch chan int64) {
 	h := cms.Hash[row]
 	cms.Counter.Add(row, h.Apply(position)%cms.Width, count)
 	ch <- 1
 }
 
-//UpdateDepthParallel: Insert a single item into the sketch with a count.
-func (cms *CMSketch) UpdateDepthParallel(position int64, count int64) {
+//UpdateDepthParallelSlow: Insert a single item into the sketch with a count.
+func (cms *CMSketch) UpdateDepthParallelSlow(position int64, count int64) {
 	ch := make(chan int64, cms.Depth)
 	var i int64
 	for i = 0; i < cms.Depth; i++ {
-		go cms.AddSignal(i, position, count, ch)
+		go cms.AddSignalSlow(i, position, count, ch)
 	}
 	for i = 0; i < cms.Depth; i++ {
+		<-ch
+	}
+}
+
+//AddSignal: Updates the counter and signals completion on a channel
+func (cms *CMSketch) AddSignal(start_row int64, end_row int64, position int64,
+	count int64, ch chan int64) {
+	var h hashes.Hash
+	for row := start_row; row < end_row; row++ {
+		h = cms.Hash[row]
+		cms.Counter.Add(row, h.Apply(position)%cms.Width, count)
+	}
+	ch <- 1
+}
+
+//UpdateDepthParallel: Insert a single item into the sketch with a count.
+func (cms *CMSketch) UpdateDepthParallel(position int64, count int64) {
+	var i int64
+	NbyP := cms.Depth / numProcs
+	ch := make(chan int64, NbyP)
+	for i = 0; i < numProcs; i++ {
+		go cms.AddSignal(i*NbyP, (i+1)*NbyP, position, count, ch)
+	}
+	for i = 0; i < numProcs; i++ {
 		<-ch
 	}
 }
@@ -86,12 +110,16 @@ func (cms *CMSketch) PointQuery(position int64) int64 {
 }
 
 var depthPtr, widthPtr, efactorPtr *int64
+var numProcs int64
 
 func init() {
 	depthPtr = flag.Int64("depth", 50, "sets the number of rows (and hash functions) in the CMSketch")
 	widthPtr = flag.Int64("width", 80, "sets the number of columns in the CMSketch")
 	efactorPtr = flag.Int64("efactor", 10, "number of elements = depth*width*efactor")
+	NumProcsPtr := flag.Int64("procs", 1, "number of concurrent worker processes")
 	flag.Parse()
+	numProcs = *NumProcsPtr
+
 }
 
 func main() {
