@@ -29,6 +29,32 @@ func NewCMSketch(Depth, Width int64) CMSketch {
 	return cms
 }
 
+//Clone: Return a copy of the skecth with the same parameters and hashes,
+//but a fresh set of counters. Suggested use is to compare two different
+//manipulations for accuracy.
+func (cms *CMSketch) Clone() CMSketch {
+	Counter := NewMatrix(cms.Depth, cms.Width)
+	out := CMSketch{cms.Depth, cms.Width, cms.Hash, Counter}
+	return out
+}
+
+//Equal: Tell if two cms instances have the same parameters and data.
+func (cms *CMSketch) Equal(other *CMSketch) bool {
+	depths := cms.Depth == other.Depth
+	widths := cms.Width == other.Width
+	var hash bool
+	hash = true
+	for i, h := range cms.Hash {
+		hash = other.Hash[i].Equal(h) && hash
+		if !hash {
+			break
+		}
+	}
+	counters := cms.Counter.Equal(&other.Counter)
+	out := depths && widths && hash && counters
+	return out
+}
+
 //RandomHashes: Make uniformly random hashes from a user provided
 //stream of random numbers.
 func RandomHashes(r *rand.Rand, Depth int64) []hashes.Hash {
@@ -79,16 +105,25 @@ func (cms *CMSketch) AddSignal(start_row int64, end_row int64, position int64,
 }
 
 //UpdateDepthParallel: Insert a single item into the sketch with a count.
-func (cms *CMSketch) UpdateDepthParallel(position int64, count int64) {
+func (cms *CMSketch) UpdateDepthParallel(position int64, count int64, numProcs int64) {
 	var i int64
 	NbyP := cms.Depth / numProcs
-	ch := make(chan int64, NbyP)
+	ch := make(chan int64, numProcs)
 	for i = 0; i < numProcs; i++ {
 		go cms.AddSignal(i*NbyP, (i+1)*NbyP, position, count, ch)
 	}
 	for i = 0; i < numProcs; i++ {
 		<-ch
 	}
+}
+
+//BatchUpdate: insert a batch of edges all at once.
+//You must wait for a signal on the channel in order to ensure correct results
+func (cms *CMSketch) BatchUpdate(elements []int64, ch chan int64) {
+	for _, z := range elements {
+		cms.UpdateSerial(z, 1)
+	}
+	ch <- 1
 }
 
 //PointQuery: query the value at position
@@ -119,7 +154,6 @@ func init() {
 	NumProcsPtr := flag.Int64("procs", 1, "number of concurrent worker processes")
 	flag.Parse()
 	numProcs = *NumProcsPtr
-
 }
 
 func main() {

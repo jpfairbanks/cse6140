@@ -4,9 +4,18 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"runtime"
 	"testing"
 	"time"
 )
+
+func tic() time.Time {
+	return time.Now()
+}
+
+func toc(ts time.Time) time.Duration {
+	return time.Now().Sub(ts)
+}
 
 func TestInit(t *testing.T) {
 	var d, w int64
@@ -90,10 +99,12 @@ func TestSpeed(t *testing.T) {
 	}
 	te := time.Now().Sub(ts)
 	fmt.Printf("time Serial: %v\n", te)
+	numProcs := runtime.NumCPU()
+	runtime.GOMAXPROCS(numProcs)
 	ts = time.Now()
 	for j = 0; j < numElements; j++ {
 		z = int64(zipfer.Uint64())
-		cms.UpdateSerial(z, 1)
+		cms.UpdateDepthParallel(z, 1, int64(numProcs))
 	}
 	te = time.Now().Sub(ts)
 	fmt.Printf("time parallel: %v\n", te)
@@ -132,4 +143,47 @@ func TestAccuracy(t *testing.T) {
 		totalLoss += loss(float64(cj), float64(qj))
 	}
 	fmt.Printf("Total Loss: %f/%d\n", totalLoss, numElements)
+}
+
+//TestBatchInsert: Compare the data structures after making batch inserts to one
+//where we have made serial insertions to test that they produce the same result
+func TestBatchInsert(t *testing.T) {
+	src := rand.NewSource(0)
+	r := rand.New(src)
+	cms := makeCMS(r)
+	var numElements, batchsize int64
+	batchsize = 10
+	zipfer := makeZipfer(r)
+
+	elements := make([]int64, batchsize)
+	var i, z int64
+	var ts time.Time
+	var te time.Duration
+	ts = tic()
+	for i = 0; i < batchsize; i++ {
+		z = int64(zipfer.Uint64())
+		elements[i] = z
+	}
+	te = toc(ts)
+	fmt.Printf("time zipfer: %s\n", te)
+	ts = tic()
+	for i = 0; i < numElements; i++ {
+		cms.UpdateSerial(z, 1)
+	}
+	te = toc(ts)
+	fmt.Printf("time single insertions: %v\n", te)
+	t.Logf("cms:\n%v\n", cms)
+	batchcms := cms.Clone()
+	ch := make(chan int64)
+	go batchcms.BatchUpdate(elements, ch)
+	<-ch
+	result := cms.Equal(&batchcms)
+	if !result {
+		t.Errorf("the sketches did not come up equal\n")
+		t.Logf("batchcms:\n%v\n", batchcms)
+	}
+}
+
+func TestDecrement(t *testing.T) {
+	t.Fail()
 }
