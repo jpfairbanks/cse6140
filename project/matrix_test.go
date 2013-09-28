@@ -30,7 +30,7 @@ func raceyUpdater(M *Matrix, ch chan int64) {
 func TestRacey(t *testing.T) {
 	M := NewMatrix(2, 4)
 	var k, rounds int64
-	rounds = 900
+	rounds = 500
 	fmt.Println(M)
 	ch := make(chan int64, rounds)
 	ts := time.Now()
@@ -46,8 +46,8 @@ func TestRacey(t *testing.T) {
 		if M.Read(1, i) != rounds*100 {
 			t.Errorf("Atomics did not work: 1,%d\n", i)
 		}
-		t.Logf("Post Atomics:\n%v\n", M)
 	}
+	t.Logf("Post Atomics:\n%v\n", M)
 	ts = time.Now()
 	for k = 0; k < rounds; k++ {
 		go raceyUpdater(&M, ch)
@@ -59,8 +59,8 @@ func TestRacey(t *testing.T) {
 		if M.Read(0, i) == rounds*100 {
 			t.Errorf("Race condition did not appear 0,%d\n", i)
 		}
-		t.Logf("Post Racey:\n%v\n", M)
 	}
+	t.Logf("Post Racey:\n%v\n", M)
 	timeRacey := time.Now().Sub(ts)
 	fmt.Printf("time atomic: %d\n", timeAtomic)
 	fmt.Printf("time racey: %d\n", timeRacey)
@@ -74,5 +74,23 @@ func TestString(t *testing.T) {
 	fmt.Println(S)
 	if S != rightS {
 		t.Errorf(S)
+	}
+}
+
+//TestEqual: make sure that we can test for deep equality
+func TestEqual(t *testing.T) {
+	rightS := "[0 0 0 0]\n[0 0 0 0]"
+	M := NewMatrix(2, 4)
+	other := NewMatrix(2, 5)
+	if M.Equal(&other) {
+		t.Errorf("Failed on different sized matrices\n")
+	}
+	other = NewMatrix(2, 4)
+	if !M.Equal(&other) {
+		t.Errorf("False negative on zeros")
+	}
+	other.Data[0] = 1
+	if M.Equal(&other) {
+		t.Errorf("False positive")
 	}
 }

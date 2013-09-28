@@ -21,6 +21,19 @@ type Matrix struct {
 	Data  []int64
 }
 
+//all: Compare two slices return true if both have the same lengths and data
+func all(a, b []int64) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, _ := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
 func NewMatrix(Nrows, Ncols int64) Matrix {
 	data := make([]int64, Nrows*Ncols)
 	return Matrix{Nrows, Ncols, data}
@@ -57,4 +70,18 @@ func (M *Matrix) String() string {
 		strarr[i] = str
 	}
 	return strings.Join(strarr, "\n")
+}
+
+//Equal: Test for deep equality of matrices
+func (M *Matrix) Equal(other *Matrix) bool {
+	if M.Nrows != other.Nrows {
+		return false
+	}
+	if M.Ncols != other.Ncols {
+		return false
+	}
+	if !all(M.Data, other.Data) {
+		return false
+	}
+	return true
 }
