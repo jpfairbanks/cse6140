@@ -44,3 +44,15 @@ func Rand(r *rand.Rand) Hash {
 	b := rand.Int63n(MOD)
 	return New(a, b)
 }
+
+//Equal: check that all of the hashes have the same parameters
+func (h Hash) Equal(other Hash) bool {
+	if h.a != other.a {
+		return false
+	}
+	if h.b != other.b {
+		return false
+	} else {
+		return true
+	}
+}

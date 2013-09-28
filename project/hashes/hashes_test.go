@@ -53,6 +53,21 @@ func TestNew(t *testing.T) {
 	}
 }
 
+func TestEqual(t *testing.T) {
+	var aval, bval int64
+	aval = 5
+	bval = 10
+	h := New(aval, bval)
+	other := New(aval, bval)
+	if !h.Equal(other) {
+		t.Errorf("False negative\n")
+	}
+	other = New(aval, bval+1)
+	if h.Equal(other) {
+		t.Errorf("False positive\n")
+	}
+}
+
 func TestRand(t *testing.T) {
 	h := Rand(rand.New(rand.NewSource(0)))
 	var aval, bval int64
