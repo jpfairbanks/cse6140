@@ -16,6 +16,7 @@ Feel free to use this code for any purpose, academic, instructional, commercial.
 TODOs
 =====
 - [ ] Batch insertions
+- [ ] Improve cache performance by sorting the insertions for each row.
 - [ ] Element level parallelism
 - [ ] Signal based parallel insert for Depth > 1000
 - [ ] Determine good parameters
