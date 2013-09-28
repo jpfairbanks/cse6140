@@ -79,7 +79,6 @@ func TestString(t *testing.T) {
 
 //TestEqual: make sure that we can test for deep equality
 func TestEqual(t *testing.T) {
-	rightS := "[0 0 0 0]\n[0 0 0 0]"
 	M := NewMatrix(2, 4)
 	other := NewMatrix(2, 5)
 	if M.Equal(&other) {
