@@ -151,8 +151,8 @@ func TestBatchInsert(t *testing.T) {
 	src := rand.NewSource(0)
 	r := rand.New(src)
 	cms := makeCMS(r)
-	var numElements, batchsize int64
-	batchsize = 10
+	var batchsize int64
+	batchsize = 1000
 	zipfer := makeZipfer(r)
 
 	elements := make([]int64, batchsize)
@@ -167,7 +167,7 @@ func TestBatchInsert(t *testing.T) {
 	te = toc(ts)
 	fmt.Printf("time zipfer: %s\n", te)
 	ts = tic()
-	for i = 0; i < numElements; i++ {
+	for _, z := range elements {
 		cms.UpdateSerial(z, 1)
 	}
 	te = toc(ts)
@@ -175,8 +175,11 @@ func TestBatchInsert(t *testing.T) {
 	t.Logf("cms:\n%v\n", cms)
 	batchcms := cms.Clone()
 	ch := make(chan int64)
-	go batchcms.BatchUpdate(elements, ch)
+	ts = tic()
+	go batchcms.BatchUpdate(elements, ch, int64(runtime.NumCPU()))
 	<-ch
+	te = toc(ts)
+	fmt.Printf("time batch insertions: %v\n", te)
 	result := cms.Equal(&batchcms)
 	if !result {
 		t.Errorf("the sketches did not come up equal\n")

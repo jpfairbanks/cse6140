@@ -119,9 +119,9 @@ func (cms *CMSketch) UpdateDepthParallel(position int64, count int64, numProcs i
 
 //BatchUpdate: insert a batch of edges all at once.
 //You must wait for a signal on the channel in order to ensure correct results
-func (cms *CMSketch) BatchUpdate(elements []int64, ch chan int64) {
+func (cms *CMSketch) BatchUpdate(elements []int64, ch chan int64, numProcs int64) {
 	for _, z := range elements {
-		cms.UpdateSerial(z, 1)
+		cms.UpdateDepthParallel(z, 1, numProcs)
 	}
 	ch <- 1
 }
