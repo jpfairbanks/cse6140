@@ -34,6 +34,23 @@ func (h *Hash) Apply(x int64) int64 {
 	return result
 }
 
+//ApplyBatch: compute the hash for an array of input, you need to take this modulo the width
+// in order to make sure it fits in the array that you want to store it in.
+// The array yarr will be modified to house the output.
+// If you want to use this function in parallel, then you must provide different arrays to each thread.
+// The allocation of yarr must happen before you call this otherwise. We do not check that yarr is the right size.
+// Very unsafe programming practice imported from C. However this does shave off function call overhead compared to
+// calling Apply in a tight loop.
+func (h *Hash) ApplyBatch(xarr []int64, yarr []int64) {
+	var result int64
+	for i, x := range xarr {
+		result = (h.a*x + h.b)
+		//take the highbits 64bit+ lowbits and make sure what is left is less than 2^31-1
+		result = ((result >> HL) + result) & MOD
+		yarr[i] = result
+	}
+}
+
 //New: create a new hash and make sure that it is valid
 func New(a int64, b int64) Hash {
 	return Hash{a, b}

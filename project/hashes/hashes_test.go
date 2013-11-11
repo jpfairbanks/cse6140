@@ -12,7 +12,22 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
+	"time"
 )
+
+//all: Compare two slices return true if both have the same lengths and data
+//This code was copied from matrix.go
+func all(a, b []int64) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, _ := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
 
 //const MOD int64 = (2 << 31) - 1
 //const HL uint64 = 31
@@ -98,5 +113,44 @@ func TestApply(t *testing.T) {
 			fmt.Printf("\t%d", h.Apply(j))
 		}
 		fmt.Printf("\n")
+	}
+}
+
+func TestApplyBatch(t *testing.T) {
+	var avals, bvals []int64
+	var hashes []Hash
+	avals = []int64{1, 2, 4, 8, 16, 2394871231}
+	bvals = []int64{5, 7, 10, 45, 3, 9283742213}
+	numhashes := len(avals)
+	hashes = make([]Hash, numhashes)
+	for i, a := range avals {
+		hashes[i] = New(a, bvals[i])
+	}
+	var j int64
+	var N int64
+	N = 10000000 / 23
+	t.Logf("N: %d\n", N)
+	input := make([]int64, N)
+	batchanswer := make([]int64, N)
+	for j = 0; j < N; j += 1 {
+		input[j] = 23 * j
+	}
+	rightanswer := make([]int64, N)
+	for i, h := range hashes {
+		tsserial := time.Now()
+		for j, x := range input {
+			rightanswer[j] = h.Apply(x)
+		}
+		teserial := time.Now().Sub(tsserial)
+		tsbatch := time.Now()
+		h.ApplyBatch(input, batchanswer)
+		tebatch := time.Now().Sub(tsbatch)
+		fmt.Printf("Apply time: %v\n", teserial)
+		fmt.Printf("Apply time batch: %v\n", tebatch)
+		if !all(rightanswer, batchanswer) {
+			t.Errorf("Failed on hash[%d]\n", i)
+			t.Errorf("%v\n", rightanswer)
+			t.Errorf("%v\n", batchanswer)
+		}
 	}
 }
