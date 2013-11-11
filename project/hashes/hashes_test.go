@@ -11,6 +11,7 @@ package hashes
 import (
 	"fmt"
 	"math/rand"
+	"sort"
 	"testing"
 	"time"
 )
@@ -96,7 +97,8 @@ func TestRand(t *testing.T) {
 		t.Errorf("b!=%d", bval)
 	}
 }
-func TestApply(t *testing.T) {
+
+func initHashes() []Hash {
 	var avals, bvals []int64
 	var hashes []Hash
 	avals = []int64{1, 2, 4, 8, 16, 2394871231}
@@ -106,6 +108,10 @@ func TestApply(t *testing.T) {
 	for i, a := range avals {
 		hashes[i] = New(a, bvals[i])
 	}
+	return hashes
+}
+func TestApply(t *testing.T) {
+	hashes := initHashes()
 	var j int64
 	for j = 0; j < 10000; j += 23 {
 		fmt.Printf("%d:", j)
@@ -117,15 +123,7 @@ func TestApply(t *testing.T) {
 }
 
 func TestApplyBatch(t *testing.T) {
-	var avals, bvals []int64
-	var hashes []Hash
-	avals = []int64{1, 2, 4, 8, 16, 2394871231}
-	bvals = []int64{5, 7, 10, 45, 3, 9283742213}
-	numhashes := len(avals)
-	hashes = make([]Hash, numhashes)
-	for i, a := range avals {
-		hashes[i] = New(a, bvals[i])
-	}
+	hashes := initHashes()
 	var j int64
 	var N int64
 	N = 10000000 / 23
@@ -150,6 +148,41 @@ func TestApplyBatch(t *testing.T) {
 		if !all(rightanswer, batchanswer) {
 			t.Errorf("Failed on hash[%d]\n", i)
 			t.Errorf("%v\n", rightanswer)
+			t.Errorf("%v\n", batchanswer)
+		}
+	}
+}
+
+func TestApplyBatchSort(t *testing.T) {
+	hashes := initHashes()
+	var j, N int64
+	N = 100000 / 23
+	batchanswer := make([]int64, N)
+	input := make([]int64, N)
+	for j = 0; j < N; j += 1 {
+		input[j] = 23 * j
+	}
+	sortanswer := make([]int64, N)
+	for i, h := range hashes {
+		tsbatch := time.Now()
+		h.ApplyBatch(input, batchanswer)
+		tebatch := time.Now().Sub(tsbatch)
+		tssort := time.Now()
+		h.ApplyBatchSort(input, sortanswer)
+		tesort := time.Now().Sub(tssort)
+		fmt.Printf("Apply time batch: %v\n", tebatch)
+		fmt.Printf("Apply time sort: %v\n", tesort)
+		sortedBatch := make([]int, N)
+		for i, x := range batchanswer {
+			sortedBatch[i] = int(x)
+		}
+		sort.Sort(sort.IntSlice(sortedBatch))
+		for i, x := range sortedBatch {
+			batchanswer[i] = int64(x)
+		}
+		if !all(batchanswer, sortanswer) {
+			t.Errorf("Failed on hash[%d]\n", i)
+			t.Errorf("%v\n", sortanswer)
 			t.Errorf("%v\n", batchanswer)
 		}
 	}

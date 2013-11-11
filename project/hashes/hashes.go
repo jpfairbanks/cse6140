@@ -10,6 +10,7 @@ distinct values of a and b.
 package hashes
 
 import (
+	"github.com/cznic/sortutil"
 	"math/rand"
 )
 
@@ -49,6 +50,19 @@ func (h *Hash) ApplyBatch(xarr []int64, yarr []int64) {
 		result = ((result >> HL) + result) & MOD
 		yarr[i] = result
 	}
+}
+
+//ApplyBatchSort: Applies the hash to a batch and sorts the output in increasing order.
+//Takes and input and an output array, and leaves the sorted output values in the output array.
+func (h *Hash) ApplyBatchSort(xarr []int64, yarr []int64) {
+	var result int64
+	for i, x := range xarr {
+		result = (h.a*x + h.b)
+		//take the highbits 64bit+ lowbits and make sure what is left is less than 2^31-1
+		result = ((result >> HL) + result) & MOD
+		yarr[i] = result
+	}
+	sortutil.Int64Slice(yarr).Sort()
 }
 
 //New: create a new hash and make sure that it is valid
