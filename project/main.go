@@ -126,6 +126,17 @@ func (cms *CMSketch) BatchUpdate(elements []int64, ch chan int64, numProcs int64
 	ch <- 1
 }
 
+//BatchUpdateSort: insert a batch of edges all at once.
+//You must wait for a signal on the channel in order to ensure correct results
+//This method uses a sort to improve cache locality.
+func (cms *CMSketch) BatchUpdateSort(elements []int64, ch chan int64, numProcs int64) {
+	//TODO: this method does not actually do any sorting
+	for _, z := range elements {
+		cms.UpdateDepthParallel(z, 1, numProcs)
+	}
+	ch <- 1
+}
+
 //PointQuery: query the value at position
 func (cms *CMSketch) PointQuery(position int64) int64 {
 	temp := make([]int64, cms.Depth)
