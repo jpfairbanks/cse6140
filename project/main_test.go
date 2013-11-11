@@ -36,10 +36,10 @@ func TestInsert(t *testing.T) {
 	rh := RandomHashes(r, 2)
 	cms.Hash = rh
 	if rh[0].Apply(1)%5 != 2 {
-		t.Errorf("hash[0](1) % 5 != 2\n")
+		t.Errorf("hash[0](1) %% 5 != 2\n")
 	}
 	if rh[1].Apply(1)%5 != 3 {
-		t.Errorf("hash[0](1) % 5 != 2\n")
+		t.Errorf("hash[0](1) %% 5 != 2\n")
 	}
 	fmt.Printf("%v\n", cms)
 	t.Logf("Before:\n%v\n", cms.Counter.String())
