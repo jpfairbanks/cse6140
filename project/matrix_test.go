@@ -71,7 +71,7 @@ func TestString(t *testing.T) {
 	rightS := "[0 0 0 0]\n[0 0 0 0]"
 	M := NewMatrix(2, 4)
 	S := M.String()
-	fmt.Println(S)
+	t.Logf("%s\n", S)
 	if S != rightS {
 		t.Errorf(S)
 	}
