@@ -145,14 +145,11 @@ func TestAccuracy(t *testing.T) {
 	fmt.Printf("Total Loss: %f/%d\n", totalLoss, numElements)
 }
 
-//TestBatchInsert: Compare the data structures after making batch inserts to one
-//where we have made serial insertions to test that they produce the same result
-func TestBatchInsert(t *testing.T) {
+//drawZipf: initialize a zipf distribution generator and draw batchsize samples.
+//Not for use in external modules because it does not set the seed properly.
+func drawZipf(batchsize int64) []int64 {
 	src := rand.NewSource(0)
 	r := rand.New(src)
-	cms := makeCMS(r)
-	var batchsize int64
-	batchsize = 1000
 	zipfer := makeZipfer(r)
 
 	elements := make([]int64, batchsize)
@@ -166,11 +163,23 @@ func TestBatchInsert(t *testing.T) {
 	}
 	te = toc(ts)
 	fmt.Printf("time zipfer: %s\n", te)
-	ts = tic()
+	return elements
+}
+
+//TestBatchInsert: Compare the data structures after making batch inserts to one
+//where we have made serial insertions to test that they produce the same result
+func TestBatchInsert(t *testing.T) {
+	var batchsize int64
+	batchsize = 50000
+	elements := drawZipf(batchsize)
+	src := rand.NewSource(0)
+	r := rand.New(src)
+	cms := makeCMS(r)
+	ts := tic()
 	for _, z := range elements {
 		cms.UpdateSerial(z, 1)
 	}
-	te = toc(ts)
+	te := toc(ts)
 	fmt.Printf("time single insertions: %v\n", te)
 	t.Logf("cms:\n%v\n", cms)
 	batchcms := cms.Clone()
@@ -184,6 +193,19 @@ func TestBatchInsert(t *testing.T) {
 	if !result {
 		t.Errorf("the sketches did not come up equal\n")
 		t.Logf("batchcms:\n%v\n", batchcms)
+	}
+	t.Logf("Working on sorted batch updates")
+	sbatchcms := cms.Clone()
+	sch := make(chan int64)
+	ts = tic()
+	go sbatchcms.BatchUpdateSort(elements, sch, int64(runtime.NumCPU()))
+	<-sch
+	te = toc(ts)
+	fmt.Printf("time sorted batch insertions: %v\n", te)
+	result = cms.Equal(&sbatchcms)
+	if !result {
+		t.Errorf("sortedbatch sketch != regular sketch\n")
+		t.Logf("sbatchcms:\n%v\n", sbatchcms)
 	}
 }
 
