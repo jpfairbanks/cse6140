@@ -120,8 +120,16 @@ func (cms *CMSketch) UpdateDepthParallel(position int64, count int64, numProcs i
 //BatchUpdate: insert a batch of edges all at once.
 //You must wait for a signal on the channel in order to ensure correct results
 func (cms *CMSketch) BatchUpdate(elements []int64, ch chan int64, numProcs int64) {
-	for _, z := range elements {
-		cms.UpdateDepthParallel(z, 1, numProcs)
+	batchSize := len(elements)
+	for i, h := range cms.Hash {
+		yarr := make([]int64, batchSize)
+		h.ApplyBatch(elements, yarr)
+		for k, y := range yarr {
+			yarr[k] = y % cms.Width
+		}
+		for _, y := range yarr {
+			cms.Counter.Add(int64(i), y, 1)
+		}
 	}
 	ch <- 1
 }
@@ -130,9 +138,17 @@ func (cms *CMSketch) BatchUpdate(elements []int64, ch chan int64, numProcs int64
 //You must wait for a signal on the channel in order to ensure correct results
 //This method uses a sort to improve cache locality.
 func (cms *CMSketch) BatchUpdateSort(elements []int64, ch chan int64, numProcs int64) {
-	//TODO: this method does not actually do any sorting
-	for _, z := range elements {
-		cms.UpdateDepthParallel(z, 1, numProcs)
+	//TODO: this method needs to be optimized separately from BatchUpdate
+	batchSize := len(elements)
+	for i, h := range cms.Hash {
+		yarr := make([]int64, batchSize)
+		h.ApplyBatchSort(elements, yarr)
+		for k, y := range yarr {
+			yarr[k] = y % cms.Width
+		}
+		for _, y := range yarr {
+			cms.Counter.Add(int64(i), y, 1)
+		}
 	}
 	ch <- 1
 }
