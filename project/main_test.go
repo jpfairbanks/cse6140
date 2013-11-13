@@ -69,6 +69,14 @@ func makeCMS(r *rand.Rand) *CMSketch {
 	return &cms
 }
 
+//makeCMSparams: Initialize the CMSKETCH to parameters that are passed
+func makeCMSparams(r *rand.Rand, Depth int64, Width int64) *CMSketch {
+	hslice := RandomHashes(r, Depth)
+	cms := NewCMSketch(Depth, Width)
+	cms.Hash = hslice
+	return &cms
+}
+
 //makeZipfer: Initialize the stream of random elements for the tests.
 func makeZipfer(r *rand.Rand) *rand.Zipf {
 	//Make the zipf distribution of random input
@@ -240,7 +248,7 @@ func benchmarkBatchInsert(gomaxprocs int, batchsize int64, b *testing.B) {
 	sort := false
 	src := rand.NewSource(4)
 	r := rand.New(src)
-	cms := makeCMS(r)
+	cms := makeCMSparams(r, 160, 200)
 	ch := make(chan int, cms.Depth)
 	zipfer := makeZipfer(r)
 	elements := make([]int64, batchsize)
