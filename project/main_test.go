@@ -253,10 +253,14 @@ func benchmarkBatchInsert(gomaxprocs int, batchsize int64, b *testing.B) {
 
 var batchsize int64 = 1000000
 
-func BenchmarkBatchInsert2(b *testing.B) { benchmarkBatchInsert(2, batchsize, b) }
-func BenchmarkBatchInsert4(b *testing.B) { benchmarkBatchInsert(4, batchsize, b) }
-func BenchmarkBatchInsert6(b *testing.B) { benchmarkBatchInsert(6, batchsize, b) }
-func BenchmarkBatchInsert8(b *testing.B) { benchmarkBatchInsert(8, batchsize, b) }
+func BenchmarkBatchInsert2(b *testing.B)  { benchmarkBatchInsert(2, batchsize, b) }
+func BenchmarkBatchInsert4(b *testing.B)  { benchmarkBatchInsert(4, batchsize, b) }
+func BenchmarkBatchInsert6(b *testing.B)  { benchmarkBatchInsert(6, batchsize, b) }
+func BenchmarkBatchInsert8(b *testing.B)  { benchmarkBatchInsert(8, batchsize, b) }
+func BenchmarkBatchInsert10(b *testing.B) { benchmarkBatchInsert(10, batchsize, b) }
+func BenchmarkBatchInsert12(b *testing.B) { benchmarkBatchInsert(12, batchsize, b) }
+func BenchmarkBatchInsert14(b *testing.B) { benchmarkBatchInsert(14, batchsize, b) }
+func BenchmarkBatchInsert16(b *testing.B) { benchmarkBatchInsert(16, batchsize, b) }
 func TestDecrement(t *testing.T) {
 	t.Logf("Decrement not implemented yet")
 }
