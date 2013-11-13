@@ -170,9 +170,9 @@ func drawZipf(batchsize int64) []int64 {
 //where we have made serial insertions to test that they produce the same result
 func TestBatchInsert(t *testing.T) {
 	var batchsize int64
-	batchsize = 50000
+	batchsize = 1000000
 	elements := drawZipf(batchsize)
-	src := rand.NewSource(0)
+	src := rand.NewSource(4)
 	r := rand.New(src)
 	cms := makeCMS(r)
 	ts := tic()
@@ -183,10 +183,11 @@ func TestBatchInsert(t *testing.T) {
 	fmt.Printf("time single insertions: %v\n", te)
 	t.Logf("cms:\n%v\n", cms)
 	batchcms := cms.Clone()
-	ch := make(chan int64)
+	ch := make(chan int, cms.Depth)
+	NumCPU := runtime.NumCPU()
+	runtime.GOMAXPROCS(NumCPU)
 	ts = tic()
-	go batchcms.BatchUpdate(elements, ch, int64(runtime.NumCPU()))
-	<-ch
+	batchcms.BatchUpdate(elements, int64(NumCPU), false, ch)
 	te = toc(ts)
 	fmt.Printf("time batch insertions: %v\n", te)
 	result := cms.Equal(&batchcms)
@@ -196,10 +197,8 @@ func TestBatchInsert(t *testing.T) {
 	}
 	t.Logf("Working on sorted batch updates")
 	sbatchcms := cms.Clone()
-	sch := make(chan int64)
 	ts = tic()
-	go sbatchcms.BatchUpdateSort(elements, sch, int64(runtime.NumCPU()))
-	<-sch
+	sbatchcms.BatchUpdate(elements, int64(NumCPU), true, ch)
 	te = toc(ts)
 	fmt.Printf("time sorted batch insertions: %v\n", te)
 	result = cms.Equal(&sbatchcms)
@@ -209,6 +208,55 @@ func TestBatchInsert(t *testing.T) {
 	}
 }
 
+func sampleZipf(zipfer *rand.Zipf, batchsize int64, elements []int64) {
+	var i int64
+	var z int64
+	for i = 0; i < batchsize; i++ {
+		z = int64(zipfer.Uint64())
+		elements[i] = z
+	}
+}
+
+func BenchmarkSequeInsert(b *testing.B) {
+	var batchsize int64
+	batchsize = 1000000
+	src := rand.NewSource(4)
+	r := rand.New(src)
+	cms := makeCMS(r)
+	zipfer := makeZipfer(r)
+	elements := make([]int64, batchsize)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		sampleZipf(zipfer, batchsize, elements)
+		for _, z := range elements {
+			cms.UpdateSerial(z, 1)
+		}
+	}
+
+}
+
+func benchmarkBatchInsert(gomaxprocs int, batchsize int64, b *testing.B) {
+	runtime.GOMAXPROCS(gomaxprocs)
+	sort := false
+	src := rand.NewSource(4)
+	r := rand.New(src)
+	cms := makeCMS(r)
+	ch := make(chan int, cms.Depth)
+	zipfer := makeZipfer(r)
+	elements := make([]int64, batchsize)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		sampleZipf(zipfer, batchsize, elements)
+		cms.BatchUpdate(elements, int64(gomaxprocs), sort, ch)
+	}
+}
+
+var batchsize int64 = 1000000
+
+func BenchmarkBatchInsert2(b *testing.B) { benchmarkBatchInsert(2, batchsize, b) }
+func BenchmarkBatchInsert4(b *testing.B) { benchmarkBatchInsert(4, batchsize, b) }
+func BenchmarkBatchInsert6(b *testing.B) { benchmarkBatchInsert(6, batchsize, b) }
+func BenchmarkBatchInsert8(b *testing.B) { benchmarkBatchInsert(8, batchsize, b) }
 func TestDecrement(t *testing.T) {
-	t.Fail()
+	t.Logf("Decrement not implemented yet")
 }

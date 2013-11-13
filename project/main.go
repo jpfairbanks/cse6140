@@ -117,40 +117,42 @@ func (cms *CMSketch) UpdateDepthParallel(position int64, count int64, numProcs i
 	}
 }
 
-//BatchUpdate: insert a batch of edges all at once.
+//Processbatch: process a batch of elements, use scratch to store the intermediate hash values.
+//Use the cms.Hash[hashnum] and insert into cms.
+//Use sort=True to try and improve cache performance by sorting the output of the randomized hash
 //You must wait for a signal on the channel in order to ensure correct results
-func (cms *CMSketch) BatchUpdate(elements []int64, ch chan int64, numProcs int64) {
-	batchSize := len(elements)
-	for i, h := range cms.Hash {
-		yarr := make([]int64, batchSize)
-		h.ApplyBatch(elements, yarr)
-		for k, y := range yarr {
-			yarr[k] = y % cms.Width
-		}
-		for _, y := range yarr {
-			cms.Counter.Add(int64(i), y, 1)
-		}
+func (cms *CMSketch) ProcessBatch(elements []int64, scratch []int64, hashnum int, sort bool, ch chan int) {
+	h := cms.Hash[hashnum]
+	if !sort {
+		h.ApplyBatch(elements, scratch)
+	} else {
+		h.ApplyBatchSort(elements, scratch)
 	}
-	ch <- 1
+	for k, y := range scratch {
+		scratch[k] = y % cms.Width
+	}
+	for _, y := range scratch {
+		cms.Counter.Add(int64(hashnum), y, 1)
+	}
+	ch <- hashnum
 }
 
-//BatchUpdateSort: insert a batch of edges all at once.
-//You must wait for a signal on the channel in order to ensure correct results
-//This method uses a sort to improve cache locality.
-func (cms *CMSketch) BatchUpdateSort(elements []int64, ch chan int64, numProcs int64) {
-	//TODO: this method needs to be optimized separately from BatchUpdate
+//BatchUpdate: insert a batch of edges all at once.
+//Use sort=True to try and improve cache performance by sorting the output of the randomized hash
+func (cms *CMSketch) BatchUpdate(elements []int64, numProcs int64, sort bool, ch chan int) {
 	batchSize := len(elements)
-	for i, h := range cms.Hash {
-		yarr := make([]int64, batchSize)
-		h.ApplyBatchSort(elements, yarr)
-		for k, y := range yarr {
-			yarr[k] = y % cms.Width
-		}
-		for _, y := range yarr {
-			cms.Counter.Add(int64(i), y, 1)
-		}
+	scratch_space := make([][]int64, cms.Depth)
+	for i, _ := range cms.Hash {
+		scratch_space[i] = make([]int64, batchSize)
 	}
-	ch <- 1
+	for i, _ := range cms.Hash {
+		go cms.ProcessBatch(elements, scratch_space[i], i, sort, ch)
+	}
+	execution_order := make([]int, cms.Depth)
+	for i, _ := range cms.Hash {
+		execution_order[i] = <-ch
+	}
+	//fmt.Printf("Exc order:\n%v\n ", execution_order)
 }
 
 //PointQuery: query the value at position
