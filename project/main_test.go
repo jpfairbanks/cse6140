@@ -195,7 +195,7 @@ func TestBatchInsert(t *testing.T) {
 	NumCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(NumCPU)
 	ts = tic()
-	batchcms.BatchUpdate(elements, int64(NumCPU), false, ch)
+	batchcms.BatchUpdate(elements, false, ch)
 	te = toc(ts)
 	fmt.Printf("time batch insertions: %v\n", te)
 	result := cms.Equal(&batchcms)
@@ -206,7 +206,7 @@ func TestBatchInsert(t *testing.T) {
 	t.Logf("Working on sorted batch updates")
 	sbatchcms := cms.Clone()
 	ts = tic()
-	sbatchcms.BatchUpdate(elements, int64(NumCPU), true, ch)
+	sbatchcms.BatchUpdate(elements, true, ch)
 	te = toc(ts)
 	fmt.Printf("time sorted batch insertions: %v\n", te)
 	result = cms.Equal(&sbatchcms)
@@ -245,8 +245,7 @@ func BenchmarkSequeInsert(b *testing.B) {
 
 }
 
-func benchmarkBatchInsert(gomaxprocs int, batchsize int64, b *testing.B) {
-	runtime.GOMAXPROCS(gomaxprocs)
+func benchmarkBatchInsert(batchsize int64, b *testing.B) {
 	sort := false
 	src := rand.NewSource(4)
 	r := rand.New(src)
@@ -257,19 +256,12 @@ func benchmarkBatchInsert(gomaxprocs int, batchsize int64, b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		sampleZipf(zipfer, batchsize, elements)
-		cms.BatchUpdate(elements, int64(gomaxprocs), sort, ch)
+		cms.BatchUpdate(elements, sort, ch)
 	}
 }
 
-func BenchmarkBatchInsert2(b *testing.B) { benchmarkBatchInsert(2, batchsize, b) }
-func BenchmarkBatchInsert4(b *testing.B) { benchmarkBatchInsert(4, batchsize, b) }
-func BenchmarkBatchInsert6(b *testing.B) { benchmarkBatchInsert(6, batchsize, b) }
-func BenchmarkBatchInsert8(b *testing.B) { benchmarkBatchInsert(8, batchsize, b) }
+func BenchmarkBatchInsert(b *testing.B) { benchmarkBatchInsert(batchsize, b) }
 
-//func BenchmarkBatchInsert10(b *testing.B) { benchmarkBatchInsert(10, batchsize, b) }
-//func BenchmarkBatchInsert12(b *testing.B) { benchmarkBatchInsert(12, batchsize, b) }
-//func BenchmarkBatchInsert14(b *testing.B) { benchmarkBatchInsert(14, batchsize, b) }
-//func BenchmarkBatchInsert16(b *testing.B) { benchmarkBatchInsert(16, batchsize, b) }
 func TestDecrement(t *testing.T) {
 	t.Logf("Decrement not implemented yet")
 }

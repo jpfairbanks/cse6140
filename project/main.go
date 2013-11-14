@@ -117,6 +117,21 @@ func (cms *CMSketch) UpdateDepthParallel(position int64, count int64, numProcs i
 	}
 }
 
+//mod_width: reduces the elements of a slice so that the will be indexes of an array of size width
+func mod_width(slice []int64, width int64) {
+	for k, y := range slice {
+		slice[k] = y % width
+	}
+}
+
+//inc_counters: run through an array incrementing the appropriate counter for each element we see
+func inc_counters(cms *CMSketch, hashnum int, slice []int64) {
+	for _, y := range slice {
+		cms.Counter.Add(int64(hashnum), y, 1)
+	}
+
+}
+
 //Processbatch: process a batch of elements, use scratch to store the intermediate hash values.
 //Use the cms.Hash[hashnum] and insert into cms.
 //Use sort=True to try and improve cache performance by sorting the output of the randomized hash
@@ -128,18 +143,14 @@ func (cms *CMSketch) ProcessBatch(elements []int64, scratch []int64, hashnum int
 	} else {
 		h.ApplyBatchSort(elements, scratch)
 	}
-	for k, y := range scratch {
-		scratch[k] = y % cms.Width
-	}
-	for _, y := range scratch {
-		cms.Counter.Add(int64(hashnum), y, 1)
-	}
+	mod_width(scratch, cms.Width)
+	inc_counters(cms, hashnum, scratch)
 	ch <- hashnum
 }
 
 //BatchUpdate: insert a batch of edges all at once.
 //Use sort=True to try and improve cache performance by sorting the output of the randomized hash
-func (cms *CMSketch) BatchUpdate(elements []int64, numProcs int64, sort bool, ch chan int) {
+func (cms *CMSketch) BatchUpdate(elements []int64, sort bool, ch chan int) {
 	batchSize := len(elements)
 	scratch_space := make([][]int64, cms.Depth)
 	for i, _ := range cms.Hash {
