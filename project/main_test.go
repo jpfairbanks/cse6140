@@ -225,12 +225,14 @@ func sampleZipf(zipfer *rand.Zipf, batchsize int64, elements []int64) {
 	}
 }
 
+var cmsDepth int64 = 2 << 10
+var cmsWidth int64 = 2 << 13
+var batchsize int64 = 2 << 15
+
 func BenchmarkSequeInsert(b *testing.B) {
-	var batchsize int64
-	batchsize = 1000000
 	src := rand.NewSource(4)
 	r := rand.New(src)
-	cms := makeCMS(r)
+	cms := makeCMSparams(r, cmsDepth, cmsWidth)
 	zipfer := makeZipfer(r)
 	elements := make([]int64, batchsize)
 	b.ResetTimer()
@@ -248,7 +250,7 @@ func benchmarkBatchInsert(gomaxprocs int, batchsize int64, b *testing.B) {
 	sort := false
 	src := rand.NewSource(4)
 	r := rand.New(src)
-	cms := makeCMSparams(r, 160, 200)
+	cms := makeCMSparams(r, cmsDepth, cmsWidth)
 	ch := make(chan int, cms.Depth)
 	zipfer := makeZipfer(r)
 	elements := make([]int64, batchsize)
@@ -259,16 +261,15 @@ func benchmarkBatchInsert(gomaxprocs int, batchsize int64, b *testing.B) {
 	}
 }
 
-var batchsize int64 = 1000000
+func BenchmarkBatchInsert2(b *testing.B) { benchmarkBatchInsert(2, batchsize, b) }
+func BenchmarkBatchInsert4(b *testing.B) { benchmarkBatchInsert(4, batchsize, b) }
+func BenchmarkBatchInsert6(b *testing.B) { benchmarkBatchInsert(6, batchsize, b) }
+func BenchmarkBatchInsert8(b *testing.B) { benchmarkBatchInsert(8, batchsize, b) }
 
-func BenchmarkBatchInsert2(b *testing.B)  { benchmarkBatchInsert(2, batchsize, b) }
-func BenchmarkBatchInsert4(b *testing.B)  { benchmarkBatchInsert(4, batchsize, b) }
-func BenchmarkBatchInsert6(b *testing.B)  { benchmarkBatchInsert(6, batchsize, b) }
-func BenchmarkBatchInsert8(b *testing.B)  { benchmarkBatchInsert(8, batchsize, b) }
-func BenchmarkBatchInsert10(b *testing.B) { benchmarkBatchInsert(10, batchsize, b) }
-func BenchmarkBatchInsert12(b *testing.B) { benchmarkBatchInsert(12, batchsize, b) }
-func BenchmarkBatchInsert14(b *testing.B) { benchmarkBatchInsert(14, batchsize, b) }
-func BenchmarkBatchInsert16(b *testing.B) { benchmarkBatchInsert(16, batchsize, b) }
+//func BenchmarkBatchInsert10(b *testing.B) { benchmarkBatchInsert(10, batchsize, b) }
+//func BenchmarkBatchInsert12(b *testing.B) { benchmarkBatchInsert(12, batchsize, b) }
+//func BenchmarkBatchInsert14(b *testing.B) { benchmarkBatchInsert(14, batchsize, b) }
+//func BenchmarkBatchInsert16(b *testing.B) { benchmarkBatchInsert(16, batchsize, b) }
 func TestDecrement(t *testing.T) {
 	t.Logf("Decrement not implemented yet")
 }
