@@ -6,6 +6,7 @@ Date: 2013-09-19
 package main
 
 import (
+	//"fmt"
 	"time"
 )
 
@@ -45,6 +46,28 @@ func Parfor(f func([]int, int, int, chan int), numproc int, numdata int, data []
 		finalsum += <-ch
 	}
 	return finalsum
+}
+
+func add_place(input []int, i int, ch chan int) {
+	temp := input[i] + input[len(input)/2+i]
+	input[i] = temp
+	ch <- temp
+}
+func ParSum(xarr []int) int {
+	length := len(xarr)
+	if length == 1 {
+		return xarr[0]
+	} else {
+		ch := make(chan int, length/2)
+		for i := 0; i < length/2; i++ {
+			go add_place(xarr, i, ch)
+		}
+		for i := 0; i < length/2; i++ {
+			<-ch
+		}
+		newxarr := xarr[:length/2]
+		return ParSum(newxarr)
+	}
 }
 
 func main() {

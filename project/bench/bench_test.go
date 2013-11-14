@@ -18,8 +18,20 @@ func tmrKeyPrint(tmr timing.Timing, key string) {
 	}
 }
 
+const rounds = 10
+const numdata = 2 << 15
+const reps = 5
+const rightans = (numdata * (numdata - 1)) / 2
+
+func makedata(numdata int) []int {
+	data := make([]int, numdata)
+	for i := 0; i < numdata; i++ {
+		data[i] = i
+	}
+	return data
+}
+
 func TestLoad(t *testing.T) {
-	rounds := 21
 	tmr := timing.New(rounds - 1)
 	var k int
 	for k = 1; k < rounds; k++ {
@@ -40,10 +52,30 @@ func TestLoad(t *testing.T) {
 	return
 }
 
-const rounds = 10
-const numdata = 2 * 3 * 5 * 7 * 9 * 128 * 4
-const reps = 5
-const rightans = (numdata * (numdata - 1)) / 2
+func TestParSum(t *testing.T) {
+	data := makedata(numdata)
+	ans := ParSum(data)
+	t.Logf("ans: %d", ans)
+	t.Logf("rightans: %d", rightans)
+	if ans != rightans {
+		t.Fail()
+	}
+}
+
+func BenchmarkParSum(b *testing.B) {
+	var ans int
+	for i := 0; i < b.N; i++ {
+		ans = 0
+		data := makedata(numdata)
+		ans = ParSum(data)
+	}
+	if ans != rightans {
+		b.Logf("ans: %d", ans)
+		b.Logf("rightans: %d", rightans)
+		b.Fail()
+	}
+	//fmt.Printf("%+v\n", b)
+}
 
 func TestParforMem(t *testing.T) {
 	data := make([]int, numdata)
