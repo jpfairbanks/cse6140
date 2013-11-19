@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
 	"runtime"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -258,6 +260,43 @@ func benchmarkBatchInsert(batchsize int64, b *testing.B) {
 		sampleZipf(zipfer, batchsize, elements)
 		cms.BatchUpdate(elements, sort, ch)
 	}
+}
+
+/* weakScaling: measures the speedup as the problem size grows with the processor count. */
+func weakScaling(numProcs int64, batchsize int64, drate int64, wrate int64, numbatches int64, b *testing.B) {
+	sort := false
+	src := rand.NewSource(4)
+	r := rand.New(src)
+	cms := makeCMSparams(r, cmsDepth+drate*numProcs, cmsWidth+wrate*numProcs)
+	ch := make(chan int, cms.Depth)
+	zipfer := makeZipfer(r)
+	elements := make([]int64, batchsize)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		sampleZipf(zipfer, batchsize, elements)
+		cms.BatchUpdate(elements, sort, ch)
+	}
+}
+
+func BenchmarkWeakScaling(b *testing.B) {
+	gmp, err := strconv.Atoi(os.Getenv("GOMAXPROCS"))
+	if err != nil {
+		b.Errorf("GOMAXPROCS was not an integer; %s", gmp)
+	}
+	//fmt.Printf("GOMAXPROCS: %d \n", gmp)
+	//ts := tic()
+	weakScaling(int64(gmp), batchsize, cmsDepth/8, 0, 1, b)
+	//te := toc(ts)
+	//fmt.Println(te)
+}
+
+func TestGOMAXPROCS(t *testing.T) {
+	gmp, err := strconv.Atoi(os.Getenv("GOMAXPROCS"))
+	if err != nil {
+		t.Errorf("GOMAXPROCS was not an integer; %s", gmp)
+	}
+	fmt.Printf("logical core count: %d\n", runtime.NumCPU())
+	fmt.Printf("GOMAXPROCS: %d \n", gmp)
 }
 
 func BenchmarkBatchInsert(b *testing.B) { benchmarkBatchInsert(batchsize, b) }
