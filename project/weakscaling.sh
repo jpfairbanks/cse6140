@@ -3,7 +3,7 @@ if [ ! -r $file ]
  then
   for i in {1,2,4,8,16,64};
    do export GOMAXPROCS=$i;
-    go test -test.bench=Weak -test.run=XXX; 
+    go test -test.bench=Weak -test.run=XXX -test.benchtime=3sec;
   done > $file
  else
   echo "cannot find " $file
