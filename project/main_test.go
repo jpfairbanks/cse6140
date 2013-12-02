@@ -267,7 +267,7 @@ func weakScaling(numProcs int64, batchsize int64, drate int64, wrate int64, numb
 	sort := false
 	src := rand.NewSource(4)
 	r := rand.New(src)
-	cms := makeCMSparams(r, cmsDepth+drate*numProcs, cmsWidth+wrate*numProcs)
+	cms := makeCMSparams(r, drate*numProcs, cmsWidth+wrate*numProcs)
 	ch := make(chan int, cms.Depth)
 	zipfer := makeZipfer(r)
 	elements := make([]int64, batchsize)
@@ -285,7 +285,7 @@ func BenchmarkWeakScaling(b *testing.B) {
 	}
 	//fmt.Printf("GOMAXPROCS: %d \n", gmp)
 	//ts := tic()
-	weakScaling(int64(gmp), batchsize, cmsDepth/8, 0, 1, b)
+	weakScaling(int64(gmp), batchsize, cmsDepth/1, 0, 1, b)
 	//te := toc(ts)
 	//fmt.Println(te)
 }
