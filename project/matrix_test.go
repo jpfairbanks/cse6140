@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"runtime"
 	"testing"
 	"time"
 )
@@ -28,6 +29,7 @@ func raceyUpdater(M *Matrix, ch chan int64) {
 	ch <- 1
 }
 func TestRacey(t *testing.T) {
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	M := NewMatrix(2, 4)
 	var k, rounds int64
 	rounds = 500
