@@ -299,7 +299,21 @@ func TestGOMAXPROCS(t *testing.T) {
 	fmt.Printf("GOMAXPROCS: %d \n", gmp)
 }
 
+//BenchmarkBatchInsert: Time how long it takes for a fixed batchsize hard coded into main_test.go
 func BenchmarkBatchInsert(b *testing.B) { benchmarkBatchInsert(batchsize, b) }
+
+//BenchmarkBatchInsertEnv: Get a batchsize integer from the environment and time how long it takes
+// to insert a batch of this size. Used for investigating the performance as a function of batch size.
+// Prints out an Error message but continues with the DEFAULT 'batchsize' value in case of Error accessing ENVIRONMENT.
+func BenchmarkBatchInsertEnv(b *testing.B) {
+	batchsizeenv, err := strconv.Atoi(os.Getenv("BATCHSIZE"))
+	if err != nil {
+		fmt.Printf("ERROR Failed to get number for the batchsize from ENVIRONMENT\n")
+		benchmarkBatchInsert(batchsize, b)
+	} else {
+		benchmarkBatchInsert(int64(batchsizeenv), b)
+	}
+}
 
 func TestDecrement(t *testing.T) {
 	t.Logf("Decrement not implemented yet")
