@@ -150,6 +150,7 @@ func (cms *CMSketch) ProcessBatch(elements []int64, scratch []int64, hashnum int
 
 //BatchUpdate: insert a batch of edges all at once.
 //Use sort=True to try and improve cache performance by sorting the output of the randomized hash
+//TODO: extract the scratch_space into an argument and make the caller allocate it.
 func (cms *CMSketch) BatchUpdate(elements []int64, sort bool, ch chan int) {
 	batchSize := len(elements)
 	scratch_space := make([][]int64, cms.Depth)
